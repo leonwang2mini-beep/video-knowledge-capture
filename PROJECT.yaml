@@ -15,8 +15,9 @@ current_milestone:
   id: "M8"
   name: "public-skill-community-preview"
   display_name: "脱敏的 Skill-first 社区预览版"
-  status: "in_progress"
+  status: "completed"
   started_at: "2026-08-24"
+  completed_at: "2026-08-25"
   release_candidate: "1.3.2"
   objective: "把经过技术验证的本地视频知识采集核心整理成可公开审阅、非商业共享、由一个 canonical Agent Skill 驱动的 GitHub 社区发行候选。"
   success_definition:
@@ -27,7 +28,7 @@ current_milestone:
     - "商业授权、CLA、贡献规则、第三方许可证和品牌边界均有独立文件。"
     - "Windows CI 执行离线测试和公共发行审计；全新检出无需个人配置即可通过离线验证。"
     - "SECURITY.md 明确威胁模型、安全不变量、报告范围、已知限制和私密披露方式。"
-    - "不创建远端、不推送、不发布 GitHub Release，直到维护者单独授权。"
+    - "只有在维护者明确授权后才创建公开远端并推送；GitHub Release 和额外仓库设置仍需单独授权。"
   technical_approach:
     canonical_skill: "One standards-oriented SKILL.md with OpenAI metadata, host setup reference, and a bounded loopback Node client; Hermes adds a thin structured-tool plugin without duplicating the Skill."
     local_engine: "Node.js 20+ loopback service remains the single downloader, ASR orchestrator, dedupe/retry ledger, retained-media manager, and Obsidian writer."
@@ -51,8 +52,9 @@ current_milestone:
       command: "npm.cmd run audit:public-release"
       result: "The publication audit scanned 89 files and found no forbidden personal path, real share identifier, PID, credential material, generated Python cache or duplicated Skill source on 2026-08-25."
     - id: "m8-windows-ci"
-      status: "configured-unverified"
-      result: "The workflow is configured for Windows latest with Node.js 20 and 24; a real GitHub Actions run remains pending because no remote exists."
+      status: "verified"
+      command: "gh run view 32861621767 --repo leonwang2mini-beep/video-knowledge-capture"
+      result: "The first public push passed both Windows latest jobs for Node.js 20 and 24, including offline tests and the public-release audit, on 2026-08-25."
     - id: "m8-security-policy"
       status: "verified"
       command: "py -3 resolve_security_md.py --repo . --scope . --out -"
@@ -69,6 +71,15 @@ current_milestone:
       status: "verified"
       command: "npm.cmd run verify:hermes"
       result: "The temporary Hermes installation discovered two tools, exercised terminal result mappings, wrote one temporary note, and did not touch a real Obsidian Vault."
+    - id: "m8-public-repository"
+      status: "verified"
+      command: "gh repo view leonwang2mini-beep/video-knowledge-capture"
+      result: "The authorized public repository uses main as its default branch and the remote commit matched the locally verified commit after the first push on 2026-08-25."
+
+public_repository:
+  url: "https://github.com/leonwang2mini-beep/video-knowledge-capture"
+  visibility: "public"
+  default_branch: "main"
 
 milestone_history:
   - id: "M7"
