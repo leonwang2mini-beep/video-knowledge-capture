@@ -1,0 +1,49 @@
+{
+  "name": "video-knowledge-capture",
+  "version": "1.3.2",
+  "private": true,
+  "type": "module",
+  "description": "Skill-first local video capture, offline transcription, and Obsidian Inbox workflow.",
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "agent-skills",
+    "codex",
+    "claude-code",
+    "hermes",
+    "obsidian",
+    "video-transcription"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/launcher.mjs",
+    "capture": "node src/cli.mjs capture",
+    "retry": "node src/cli.mjs retry",
+    "setup:runtime": "node scripts/setup-runtime.mjs",
+    "setup:content": "node scripts/setup-runtime.mjs --components ffmpeg,whisper,whisperModel",
+    "setup:downloader": "node scripts/setup-runtime.mjs --components ytDlp",
+    "setup:wechat": "node scripts/setup-runtime.mjs --components wxChannel",
+    "setup:skill:codex": "node scripts/install-agent-skill.mjs --target codex",
+    "setup:skill:claude": "node scripts/install-agent-skill.mjs --target claude",
+    "setup:hermes": "node scripts/install-hermes-integration.mjs",
+    "wechat:install-cert": "node scripts/wechat-certificate.mjs install",
+    "wechat:uninstall-cert": "node scripts/wechat-certificate.mjs uninstall",
+    "test": "node --test",
+    "verify:runtime": "node scripts/verify-runtime.mjs",
+    "verify:one-box": "node scripts/verify-one-box.mjs",
+    "verify:public-platforms": "node scripts/verify-public-platforms.mjs",
+    "verify:v1": "node scripts/verify-v1.mjs",
+    "verify:yuanbao": "node scripts/verify-yuanbao.mjs",
+    "verify:yuanbao-live": "node scripts/verify-yuanbao-live.mjs",
+    "verify:wechat-live": "node scripts/verify-wechat-live.mjs",
+    "verify:mvp": "node scripts/verify-mvp.mjs",
+    "verify:content": "node scripts/verify-content.mjs",
+    "verify:material": "node scripts/verify-material.mjs",
+    "verify:launcher": "node scripts/verify-launcher.mjs",
+    "verify:usable": "node scripts/verify-usable.mjs",
+    "verify:hermes": "node scripts/verify-hermes.mjs",
+    "audit:public-release": "node scripts/audit-public-release.mjs",
+    "verify:public-release": "node --test && node scripts/audit-public-release.mjs"
+  }
+}

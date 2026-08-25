@@ -1,0 +1,30 @@
+name: Windows CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 24]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run offline tests
+        run: npm.cmd test
+
+      - name: Audit public release content
+        run: npm.cmd run audit:public-release

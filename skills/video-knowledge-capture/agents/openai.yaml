@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Knowledge Capture"
+  short_description: "Capture public videos into a local knowledge base"
+  default_prompt: "Use $video-knowledge-capture to save this authorized public video into my local knowledge base."

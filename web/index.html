@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2ede0">
+    <title>视频知识捕手</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#intake-url">跳到链接输入</a>
+    <div class="paper-grain" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="视频知识捕手首页">
+        <span class="brand-mark" aria-hidden="true">捕</span>
+        <span><b>视频知识捕手</b><small>P0004 · 本机处理</small></span>
+      </a>
+      <div class="topbar-status" id="connection-status" data-state="checking">
+        <span aria-hidden="true"></span>
+        <b id="connection-label">连接本地服务</b>
+      </div>
+    </header>
+
+    <main class="app-shell" id="top">
+      <section class="intake-hero" aria-labelledby="page-title">
+        <p class="eyebrow">ONE LINK IN · KNOWLEDGE OUT</p>
+        <h1 id="page-title">丢进一条链接，<br><em>剩下的自动完成。</em></h1>
+        <p class="hero-copy">自动识别平台、下载公开视频、离线整理字幕，并写入你的 Obsidian Inbox。</p>
+
+        <form class="intake-form" id="intake-form" novalidate>
+          <label class="visually-hidden" for="intake-url">视频链接</label>
+          <div class="intake-control">
+            <span class="link-glyph" aria-hidden="true">↗</span>
+            <input
+              id="intake-url"
+              name="url"
+              type="url"
+              inputmode="url"
+              autocomplete="url"
+              maxlength="4096"
+              placeholder="在这里粘贴视频链接"
+              required
+            >
+            <button class="primary-action" id="intake-submit" type="submit">
+              <span class="button-label">开始收录</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <p class="platform-line">微信视频号 · 微信公众号 · YouTube · 抖音 · Bilibili · 快手 · 小红书 · TikTok · 腾讯视频</p>
+        </form>
+
+        <section class="intake-result" id="intake-result" role="status" aria-live="polite" hidden>
+          <span class="result-icon" id="result-icon" aria-hidden="true">○</span>
+          <div>
+            <b id="result-title">正在准备</b>
+            <p id="result-message"></p>
+            <small id="result-path"></small>
+          </div>
+        </section>
+      </section>
+
+      <section class="activity-section" aria-labelledby="activity-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">RECENT</p>
+            <h2 id="activity-title">最近处理</h2>
+          </div>
+          <span id="media-job-count">0 个任务</span>
+        </div>
+        <div class="media-job-list" id="media-job-list" aria-live="polite">
+          <div class="quiet-empty">
+            <span aria-hidden="true">✓</span>
+            <p>准备好了，粘贴第一条链接吧。</p>
+          </div>
+        </div>
+      </section>
+
+      <details class="settings-panel" id="settings-panel">
+        <summary>
+          <span><b>设置与恢复</b><small id="settings-summary">Inbox、首次登录和失败重试</small></span>
+          <span class="summary-plus" aria-hidden="true">＋</span>
+        </summary>
+
+        <div class="settings-content">
+          <section class="setting-block destination-block" aria-labelledby="destination-title">
+            <div class="setting-heading">
+              <div><span class="setting-number">01</span><h3 id="destination-title">知识库落点</h3></div>
+              <span class="status-pill" id="inbox-seal" data-state="checking">检查中</span>
+            </div>
+            <p class="current-path" id="destination-path">尚未配置 Obsidian Inbox</p>
+            <form id="config-form" novalidate>
+              <label for="inbox-path">Inbox 完整路径</label>
+              <div class="inline-form">
+                <input id="inbox-path" name="inboxDir" type="text" autocomplete="off" spellcheck="false" placeholder="D:\我的知识库\00 Inbox" required>
+                <button class="secondary-action" id="config-submit" type="submit">保存</button>
+              </div>
+              <p class="field-note" id="config-hint">只会写入你指定的这个文件夹。</p>
+              <label for="retained-media-path">下载视频保存位置</label>
+              <input id="retained-media-path" name="retainedMediaDir" type="text" autocomplete="off" spellcheck="false" placeholder="D:\KnowledgeBase\VideoMedia" required>
+              <p class="field-note">只保存下载成功并通过哈希校验的原视频；字幕临时文件仍会自动清理。</p>
+              <button class="secondary-action" id="retained-media-open" type="button">打开视频目录</button>
+            </form>
+            <label class="preference-toggle" for="keep-media-default">
+              <input id="keep-media-default" type="checkbox" checked>
+              <span><b>保留下载的视频</b><small>字幕完成后把原视频保存在本应用的受管目录。</small></span>
+            </label>
+          </section>
+
+          <section class="setting-block runtime-block" aria-labelledby="runtime-title">
+            <div class="setting-heading">
+              <div><span class="setting-number">02</span><h3 id="runtime-title">本地内容引擎</h3></div>
+              <span class="status-pill" id="runtime-seal" data-state="checking">检查中</span>
+            </div>
+            <p class="field-note">下载器、FFmpeg 和 whisper.cpp 都在本机运行；缺少时首次收录会自动安装并校验。</p>
+            <ul class="runtime-components" id="runtime-components">
+              <li>正在检查本地组件…</li>
+            </ul>
+            <button class="secondary-action" id="runtime-install" type="button">检查并修复</button>
+          </section>
+
+          <section class="setting-block wechat-block" aria-labelledby="wechat-title">
+            <div class="setting-heading">
+              <div><span class="setting-number">03</span><h3 id="wechat-title">微信视频号</h3></div>
+              <span class="status-pill" id="yuanbao-seal" data-state="checking">检查中</span>
+            </div>
+            <p class="field-note" id="yuanbao-status">首次使用需要在隔离窗口中扫码登录一次腾讯元宝。</p>
+            <div class="button-row">
+              <button class="secondary-action" id="yuanbao-login" type="button">登录一次</button>
+              <button class="text-action" id="yuanbao-cancel" type="button">取消登录</button>
+              <button class="text-action danger-action" id="yuanbao-forget" type="button">清除登录态</button>
+            </div>
+
+            <details class="fallback-tools">
+              <summary>桌面微信备用捕获</summary>
+              <p class="field-note" id="wechat-status">备用组件未启动。</p>
+              <div class="button-row">
+                <button class="secondary-action" id="wechat-start" type="button">启动备用捕获</button>
+                <button class="text-action" id="wechat-stop" type="button">停止</button>
+                <button class="text-action" id="wechat-cert-install" type="button">安装证书</button>
+                <button class="text-action danger-action" id="wechat-cert-uninstall" type="button">卸载证书</button>
+              </div>
+            </details>
+          </section>
+
+          <section class="setting-block file-block" aria-labelledby="file-title">
+            <div class="setting-heading">
+              <div><span class="setting-number">04</span><h3 id="file-title">本机文件</h3></div>
+            </div>
+            <p class="field-note">平台暂时无法下载时，可以手动选择已有视频或音频继续转写。</p>
+            <form class="local-media-form" id="local-media-form" novalidate>
+              <label for="local-media-url">原始链接</label>
+              <input id="local-media-url" type="url" maxlength="4096" placeholder="https://..." required>
+              <label for="local-media-file">视频或音频</label>
+              <input id="local-media-file" type="file" accept="video/*,audio/*,.mkv,.m4a" required>
+              <button class="secondary-action" id="local-media-submit" type="submit">转写这个文件</button>
+            </form>
+          </section>
+
+          <section class="setting-block recovery-block" aria-labelledby="recovery-title">
+            <div class="setting-heading">
+              <div><span class="setting-number">05</span><h3 id="recovery-title">失败恢复</h3></div>
+              <span class="status-pill" id="queue-count" data-state="ready">0 条</span>
+            </div>
+            <div class="failure-list" id="failure-list" aria-live="polite">
+              <div class="quiet-empty"><span aria-hidden="true">✓</span><p>没有待处理记录。</p></div>
+            </div>
+          </section>
+        </div>
+      </details>
+    </main>
+
+    <footer class="page-footer">
+      <span>所有内容留在本机</span>
+      <span>BUILD 1.3.2</span>
+    </footer>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a bounded noncommercial community improvement.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe the repeated workflow or missing capability.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome and trade-offs
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Project boundaries
+      options:
+        - label: This request does not require private-content access, credential import, DRM bypass, or bulk scraping.
+          required: true
