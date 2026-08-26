@@ -42,6 +42,7 @@
 - 2026-08-26：M10 将 OpenClaw 纳入显式 Skill 安装目标，并新增 `setup:community`、`doctor` 与 `verify:community`。Skill 不能脱离 Windows 本地引擎单独完成下载、转写或写库；QQ、微信等聊天软件只有在其 Agent 已具备 Skill 发现、本机工具权限和渠道授权后才可能接入。
 - 社区安装要求显式指定一个宿主和一个已存在、可写的 Inbox；`all` 只用于用户明确要在同机安装全部宿主的场景。安装器拒绝磁盘根配置目录和路径链中的符号链接 / junction，只清理 `video-knowledge-capture` 受管目录。
 - `doctor` 是只读 JSON 诊断：检查 Windows、Node.js、Inbox、核心运行时、宿主文件和固定 loopback 服务，并拒绝与仓库版本不一致的旧服务；它不替代具体平台、手机消息或真实用户 E4。
+- 2026-08-26：公开预发布 `v1.4.0-beta.1` 固定到提交 `138dd44`；GitHub Windows CI run `32976536924` 在 Node.js 20/24 均通过。Beta 只证明可复现技术门禁，不代表外部新用户、真实 OpenClaw 或手机消息 E4 已完成。
 
 ## 宣传定位
 

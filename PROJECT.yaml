@@ -49,6 +49,10 @@ current_milestone:
       status: "verified"
       command: "Codex Security diff scan 50a97495-8024-4776-ac18-81844de15bef plus focused path-hardening tests"
       result: "Ten M10 surfaces received complete parent review with no reportable finding. The intermediate-junction hardening gap was not an evidenced privilege escalation in the documented trusted-user workflow, but was still fixed before release and covered by a Windows junction refusal test."
+    - id: "m10-public-beta"
+      status: "verified"
+      command: "git push origin main && gh run watch 32976536924 --exit-status && gh release create v1.4.0-beta.1 --prerelease"
+      result: "GitHub main reached 138dd44; Windows CI passed on Node.js 20 and 24; the non-draft prerelease v1.4.0-beta.1 was published against that exact commit."
     - id: "m10-external-user-e4"
       status: "pending-external-users"
       result: "At least one clean-machine community installation and one real host end-to-end capture remain required before production-readiness claims."
@@ -57,6 +61,11 @@ public_repository:
   url: "https://github.com/leonwang2mini-beep/video-knowledge-capture"
   visibility: "public"
   default_branch: "main"
+  latest_prerelease:
+    tag: "v1.4.0-beta.1"
+    url: "https://github.com/leonwang2mini-beep/video-knowledge-capture/releases/tag/v1.4.0-beta.1"
+    target_commit: "138dd44f51b919cce075cdf7ddac4701bec11bba"
+    windows_ci_run: "https://github.com/leonwang2mini-beep/video-knowledge-capture/actions/runs/32976536924"
 
 milestone_history:
   - id: "M9"
