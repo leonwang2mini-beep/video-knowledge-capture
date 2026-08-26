@@ -39,6 +39,9 @@
 - 许可证、商业授权、CLA、贡献规则、第三方声明和品牌规则分别保存在根目录，不用 README 一句话替代法律文件。
 - 2026-08-25：维护者确认根目录 `SECURITY.md`。策略覆盖 canonical Skill、本地服务、平台适配、运行时和 Obsidian 写入，并固定 loopback、SSRF、路径、凭据、完整性及私密披露边界。
 - 2026-08-25：维护者授权创建公共 GitHub 仓库 `https://github.com/leonwang2mini-beep/video-knowledge-capture` 并推送 `main`；仓库保持 source-available 定位，不因公开可见而变成 OSI 开源。
+- 2026-08-26：M10 将 OpenClaw 纳入显式 Skill 安装目标，并新增 `setup:community`、`doctor` 与 `verify:community`。Skill 不能脱离 Windows 本地引擎单独完成下载、转写或写库；QQ、微信等聊天软件只有在其 Agent 已具备 Skill 发现、本机工具权限和渠道授权后才可能接入。
+- 社区安装要求显式指定一个宿主和一个已存在、可写的 Inbox；`all` 只用于用户明确要在同机安装全部宿主的场景。安装器拒绝磁盘根配置目录和路径链中的符号链接 / junction，只清理 `video-knowledge-capture` 受管目录。
+- `doctor` 是只读 JSON 诊断：检查 Windows、Node.js、Inbox、核心运行时、宿主文件和固定 loopback 服务，并拒绝与仓库版本不一致的旧服务；它不替代具体平台、手机消息或真实用户 E4。
 
 ## 宣传定位
 
@@ -48,15 +51,16 @@
 
 ## 已验证命令
 
-- `npm.cmd test`：1.3.3 通过 93 项离线测试，覆盖核心、HTTP、运行时、平台适配、Agent Skill 安装、Hermes、凭据保护和微信 sidecar 固定路径防火墙目标。
+- `npm.cmd test`：1.4.0-beta.1 通过 101 项离线测试，覆盖核心、HTTP、运行时、平台适配、四宿主 Agent Skill 安装、Hermes、doctor、配置根目录、路径 junction、凭据保护和微信 sidecar 防火墙目标。
 - `npm.cmd run verify:runtime`：固定版本的 yt-dlp、FFmpeg、whisper.cpp、模型和 wx_channel 可复算安装后摘要。
 - `npm.cmd run verify:usable`：使用临时配置和 Inbox 验证本地 HTTP 创建、去重、失败和重试，不访问真实知识库。
 - `npm.cmd run verify:hermes`：使用临时 Hermes Home、临时配置和 Inbox 验证插件发现、提交、状态查询、完成、重复和失败映射。
 - `python quick_validate.py skills/video-knowledge-capture`：canonical Skill 的名称、frontmatter 和结构验证通过；Windows 运行时设置 `PYTHONUTF8=1`。
 - `node --test test/agent-skill.test.mjs test/hermes-integration.test.mjs`：Codex、Claude Code、自定义 Skill 目录、bundled client 与 Hermes exact-sync 均有隔离测试。
-- `npm.cmd run verify:public-release`：92 项离线测试和 89 文件公共发行审计连续通过；审计阻断个人路径、真实分享标识、PID、凭据材料、Python 缓存、重复 Skill 源和缺失的 `SECURITY.md`。
+- `npm.cmd run verify:community`：使用临时用户目录、配置和 Inbox 安装 Codex、Claude Code、Hermes 与 OpenClaw 集成，并在注入的健康运行时和 loopback 服务下让 doctor 达到 `ready`；该结果是 E3 模拟，不是实际宿主 E4。
+- `npm.cmd run verify:public-release`：1.4.0-beta.1 的干净本地克隆通过 101 项离线测试、临时首用、四宿主隔离首装和 98 文件公共发行审计；审计阻断个人路径、真实分享标识、PID、凭据材料、Python 缓存和重复 Skill 源。
 - `py -3 resolve_security_md.py --repo . --scope . --out -`：根目录 `SECURITY.md` 是唯一有效策略，解析链无冲突。
-- `git clone --local --no-hardlinks . <temporary-directory>`：独立 `main` 检出在验证前后均保持干净，92 项测试、89 文件审计和 canonical Skill 校验通过。
+- `git clone --local --no-hardlinks . <temporary-directory>`：独立 `main` 检出在验证前后均保持干净，101 项测试、98 文件审计、临时首用、四宿主隔离首装和 canonical Skill 校验通过。
 - `gh run view 32861621767 --repo leonwang2mini-beep/video-knowledge-capture`：首次公开 push 的 Windows CI 在 Node.js 20 和 24 上均通过离线测试与公开发行审计。
 - `PYTHONDONTWRITEBYTECODE=1`：所有 Python 集成验证子进程禁用字节码缓存，避免测试污染待发布工作树。
 - `npm.cmd run wechat:configure-firewall`：在管理员 PowerShell 中一次性清理 P0004 旧随机路径规则，并安装固定的本机专用入站阻止规则。
@@ -72,6 +76,7 @@
 - 浏览器或平台规则变化可能让先前可用的公开链接失败；错误必须保留稳定分类，不能伪造字幕、改用用户 Cookie 或旁路 P0004 写库。
 - Skill 是交互和适配层，不包含云端处理能力。本地 P0004 服务、Node.js 和所需运行时仍必须安装并运行。
 - 项目当前只支持 Windows 本地运行；Codex 和 Claude Code 的 Skill 目录安装不等于跨平台运行时支持。
+- OpenClaw 当前只完成官方用户 Skill 目录的隔离安装、bundled client 合同和 doctor 模拟；真实 OpenClaw 进程发现、工具授权和端到端捕获仍待 E4。
 - PolyForm Noncommercial 不是 OSI 开源许可证。对外描述必须使用 source-available 或非商业社区源码。
 
 ## 外部资源
