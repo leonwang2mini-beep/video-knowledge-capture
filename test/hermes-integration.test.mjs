@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -105,8 +105,8 @@ test("Hermes installer exactly synchronizes the declared plugin and skill files"
     await mkdir(path.dirname(staleReference), { recursive: true });
     await writeFile(staleReference, "manual downloader and direct vault writer", "utf8");
     const second = await installHermesIntegration({ hermesHome: root });
-    assert.equal(first.copiedCount, 6);
-    assert.equal(second.copiedCount, 6);
+    assert.equal(first.copiedCount, 7);
+    assert.equal(second.copiedCount, 7);
     assert.equal(first.prunedCount, 0);
     assert.equal(second.prunedCount, 1);
     await assert.rejects(readFile(staleReference, "utf8"), { code: "ENOENT" });
@@ -117,6 +117,39 @@ test("Hermes installer exactly synchronizes the declared plugin and skill files"
     assert.match(
       await readFile(path.join(first.skillDir, "SKILL.md"), "utf8"),
       /video_knowledge_capture/,
+    );
+    assert.match(
+      await readFile(path.join(first.skillDir, "scripts", "p0004-client.mjs"), "utf8"),
+      /127\.0\.0\.1:43127/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Hermes installer rejects an intermediate directory junction", async (context) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "p0004-hermes-junction-test-"));
+  const hermesHome = path.join(root, "hermes");
+  const outsidePlugins = path.join(root, "outside-plugins");
+  await mkdir(hermesHome, { recursive: true });
+  await mkdir(outsidePlugins, { recursive: true });
+  try {
+    try {
+      await symlink(outsidePlugins, path.join(hermesHome, "plugins"), "junction");
+    } catch (error) {
+      if (["EPERM", "EACCES", "ENOTSUP"].includes(error?.code)) {
+        context.skip(`junction creation unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    await assert.rejects(
+      installHermesIntegration({ hermesHome }),
+      /Refusing symbolic-link destination/,
+    );
+    await assert.rejects(
+      readFile(path.join(outsidePlugins, "video-knowledge-capture", "plugin.yaml"), "utf8"),
+      { code: "ENOENT" },
     );
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -312,7 +345,7 @@ test("Hermes integration keeps a fixed loopback handler and aligned skill metada
   assert.match(skillSource, /## Report the Result/);
   assert.match(skillSource, /PUBLIC_MEDIA_PLATFORM_UNSUPPORTED/);
   assert.match(skillSource, /do not replace the local service with another downloader/);
-  assert.match(manifestSource, /version: "1\.3\.3"/);
-  assert.equal(JSON.parse(packageSource).version, "1.3.3");
-  assert.match(projectSource, /release_candidate: "1\.3\.3"/);
+  assert.match(manifestSource, /version: "1\.4\.0-beta\.1"/);
+  assert.equal(JSON.parse(packageSource).version, "1.4.0-beta.1");
+  assert.match(projectSource, /release_candidate: "1\.4\.0-beta\.1"/);
 });

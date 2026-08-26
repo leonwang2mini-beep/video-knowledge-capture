@@ -1,6 +1,6 @@
 {
   "name": "video-knowledge-capture",
-  "version": "1.3.3",
+  "version": "1.4.0-beta.1",
   "private": true,
   "type": "module",
   "description": "Skill-first local video capture, offline transcription, and Obsidian Inbox workflow.",
@@ -10,6 +10,7 @@
     "codex",
     "claude-code",
     "hermes",
+    "openclaw",
     "obsidian",
     "video-transcription"
   ],
@@ -26,7 +27,10 @@
     "setup:wechat": "node scripts/setup-runtime.mjs --components wxChannel",
     "setup:skill:codex": "node scripts/install-agent-skill.mjs --target codex",
     "setup:skill:claude": "node scripts/install-agent-skill.mjs --target claude",
+    "setup:skill:openclaw": "node scripts/install-agent-skill.mjs --target openclaw",
     "setup:hermes": "node scripts/install-hermes-integration.mjs",
+    "setup:community": "node scripts/setup-community.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "wechat:install-cert": "node scripts/wechat-certificate.mjs install",
     "wechat:uninstall-cert": "node scripts/wechat-certificate.mjs uninstall",
     "wechat:configure-firewall": "node scripts/wechat-firewall.mjs install",
@@ -46,7 +50,8 @@
     "verify:launcher": "node scripts/verify-launcher.mjs",
     "verify:usable": "node scripts/verify-usable.mjs",
     "verify:hermes": "node scripts/verify-hermes.mjs",
+    "verify:community": "node scripts/verify-community.mjs",
     "audit:public-release": "node scripts/audit-public-release.mjs",
-    "verify:public-release": "node --test && node scripts/audit-public-release.mjs"
+    "verify:public-release": "node --test && node scripts/verify-usable.mjs && node scripts/verify-community.mjs && node scripts/audit-public-release.mjs"
   }
 }

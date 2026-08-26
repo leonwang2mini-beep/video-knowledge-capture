@@ -20,6 +20,25 @@ async function assertNotLink(candidate) {
   }
 }
 
+async function assertPathChainNotLink(candidate) {
+  const resolved = path.resolve(candidate);
+  const filesystemRoot = path.parse(resolved).root;
+  const relative = path.relative(filesystemRoot, resolved);
+  let current = filesystemRoot;
+  for (const segment of relative.split(path.sep).filter(Boolean)) {
+    current = path.join(current, segment);
+    try {
+      const metadata = await lstat(current);
+      if (metadata.isSymbolicLink()) {
+        throw new Error(`Refusing symbolic-link destination: ${current}`);
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      throw error;
+    }
+  }
+}
+
 async function pruneUndeclaredFiles(managedRoot, installationRoot, declaredTargets, pruned) {
   let entries;
   try {
@@ -63,20 +82,23 @@ export async function exactSyncFiles({ installationRoot, managedRoots, files }) 
   const copied = [];
   const pruned = [];
 
+  await assertPathChainNotLink(resolvedRoot);
   await mkdir(resolvedRoot, { recursive: true });
-  await assertNotLink(resolvedRoot);
+  await assertPathChainNotLink(resolvedRoot);
 
   for (const managedRoot of resolvedManagedRoots) {
     assertInside(resolvedRoot, managedRoot);
-    await assertNotLink(managedRoot);
+    await assertPathChainNotLink(managedRoot);
     await pruneUndeclaredFiles(managedRoot, resolvedRoot, declaredTargets, pruned);
   }
 
   for (const { source, target } of files) {
     const resolvedTarget = path.resolve(target);
     assertInside(resolvedRoot, resolvedTarget);
-    await assertNotLink(resolvedTarget);
+    await assertPathChainNotLink(resolvedTarget);
     await mkdir(path.dirname(resolvedTarget), { recursive: true });
+    await assertPathChainNotLink(path.dirname(resolvedTarget));
+    await assertNotLink(resolvedTarget);
     await copyFile(source, resolvedTarget);
     const [sourceBytes, targetBytes] = await Promise.all([
       readFile(source),

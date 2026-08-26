@@ -8,12 +8,12 @@
 
 ## 为什么是 Skill-first
 
-仓库的主要入口是 [Agent Skill](skills/video-knowledge-capture/SKILL.md)。Codex、Claude Code、Hermes 和其他兼容 Agent Skills 的宿主共享同一份任务边界、状态合同和安全规则。
+仓库的主要入口是 [Agent Skill](skills/video-knowledge-capture/SKILL.md)。Codex、Claude Code、Hermes、OpenClaw 和其他兼容 Agent Skills 的宿主共享同一份任务边界、状态合同和安全规则。
 
 Skill 负责理解用户意图和调用本机能力；Node.js 本地服务负责下载、离线转写、去重、重试、媒体保留和知识库写入。这样避免为每个 Agent 重做业务逻辑，也不需要先投入完整桌面客户端或云服务。
 
 ```text
-Codex / Claude Code / Hermes / compatible agents
+Codex / Claude Code / Hermes / OpenClaw / compatible agents
                          ↓
         canonical video-knowledge-capture Skill
                          ↓
@@ -45,12 +45,14 @@ Codex / Claude Code / Hermes / compatible agents
 从仓库根目录运行：
 
 ```powershell
-npm.cmd run setup:content
-npm.cmd run setup:downloader
+npm.cmd run setup:community -- --host codex --inbox "D:\KnowledgeBase\Inbox"
 start-video-capture.cmd
+npm.cmd run doctor -- --host codex
 ```
 
-浏览器会打开 `http://127.0.0.1:43127`。在“设置与恢复”中保存 Inbox 路径，然后回到首页粘贴一条用户有权处理的公开链接。
+把示例 Inbox 换成一个已存在、可写的真实 Obsidian Inbox。首条命令会配置落点、安装固定版本的核心运行时，并安装指定宿主的 Skill；可把 `codex` 换成 `claude`、`hermes` 或 `openclaw`。浏览器随后会打开 `http://127.0.0.1:43127`，`doctor` 只读检查配置、运行时、宿主文件和本机服务。
+
+只下载一个 `SKILL.md` 不足以完成视频处理；本仓库的 Windows 本地引擎必须同时安装、配置并保持运行。
 
 ### 安装到 Codex
 
@@ -77,6 +79,14 @@ hermes plugins enable video-knowledge-capture --no-allow-tool-override
 
 Hermes 使用同一份 Skill，并额外安装两个结构化工具：`video_knowledge_capture` 和 `video_knowledge_status`。消息渠道授权仍由用户在 Hermes 中单独控制。
 
+### 安装到 OpenClaw
+
+```powershell
+npm.cmd run setup:skill:openclaw
+```
+
+Skill 会安装到 `%USERPROFILE%\.openclaw\skills`。OpenClaw 必须运行在同一台 Windows 电脑上、能够执行随 Skill 提供的 Node.js 客户端，并能访问只监听本机的 P0004 服务。
+
 ### 安装到其他 Agent Skills 宿主
 
 ```powershell
@@ -84,6 +94,18 @@ node scripts/install-agent-skill.mjs --target custom --skills-dir "D:\AgentSkill
 ```
 
 安装器只精确同步 `video-knowledge-capture` 目录，拒绝符号链接目标，不修改其他 Skill。
+
+## 宿主兼容性与证据边界
+
+| 宿主 | 仓库提供 | 当前自动验证 | 尚未证明 |
+| --- | --- | --- | --- |
+| Codex | 标准 Skill 安装器、内置结构化客户端 | 临时用户目录首装、成功/失败/重复状态合同（E3 模拟） | 外部新用户真实首装与长期使用（E4） |
+| Claude Code | 标准 Skill 安装器、内置结构化客户端 | 临时用户目录首装与共用客户端合同（E3 模拟） | 外部新用户真实首装与长期使用（E4） |
+| Hermes | 标准 Skill、结构化工具插件 | 临时 Hermes Home、工具调用与深度探针（E3） | 从真实手机消息到知识库终态的外部用户 E4 |
+| OpenClaw | 官方用户 Skill 目录安装目标、内置结构化客户端 | 临时用户目录首装与 doctor（E3 模拟） | 真实 OpenClaw 进程发现、授权与端到端 E4 |
+| 其他 Agent | 显式 `--skills-dir` 安装 | 安装器的目录安全与精确同步 | 每个具体宿主的 Skill 规范、工具权限和端到端兼容性 |
+
+P0004 当前不直接连接 QQ、微信或其他聊天软件。只有当聊天软件已经连接到一个能够发现此 Skill、执行本机工具并访问 P0004 的 Agent 时，才可能把它作为消息入口；具体平台适配、授权和真实手机链路必须逐个验证，不能仅凭“兼容 Agent”推定可用。
 
 ## 日常使用
 
@@ -117,6 +139,7 @@ npm.cmd test
 npm.cmd run verify:runtime
 npm.cmd run verify:usable
 npm.cmd run verify:hermes
+npm.cmd run verify:community
 ```
 
 真实平台验证会访问用户提供的公开链接，只应在明确授权和临时 Inbox 下执行。技术验证不替代用户对转写质量和日用价值的人工验收。

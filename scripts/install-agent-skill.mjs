@@ -14,12 +14,15 @@ const declaredFiles = [
   "scripts/p0004-client.mjs",
 ];
 
-function defaultSkillsDir(target, env = process.env, homeDir = os.homedir()) {
+export function defaultSkillsDir(target, env = process.env, homeDir = os.homedir()) {
   if (target === "codex") {
     return path.join(env.CODEX_HOME || path.join(homeDir, ".codex"), "skills");
   }
   if (target === "claude") {
     return path.join(homeDir, ".claude", "skills");
+  }
+  if (target === "openclaw") {
+    return path.join(homeDir, ".openclaw", "skills");
   }
   throw new Error(`Unsupported target: ${target}`);
 }
@@ -40,8 +43,8 @@ export function parseArguments(argv) {
     }
     throw new Error(`Unknown or incomplete argument: ${argument}`);
   }
-  if (!options.target || !["codex", "claude", "custom"].includes(options.target)) {
-    throw new Error("--target must be codex, claude, or custom.");
+  if (!options.target || !["codex", "claude", "openclaw", "custom"].includes(options.target)) {
+    throw new Error("--target must be codex, claude, openclaw, or custom.");
   }
   if (options.target === "custom" && !options.skillsDir) {
     throw new Error("--target custom requires --skills-dir.");

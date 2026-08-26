@@ -1,5 +1,5 @@
 name: video-knowledge-capture
-version: "1.3.3"
+version: "1.4.0-beta.1"
 description: "Submit public video links to the loopback-only P0004 knowledge capture service and query durable job status."
 author: P0004
 kind: standalone

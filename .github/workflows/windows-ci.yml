@@ -26,5 +26,11 @@ jobs:
       - name: Run offline tests
         run: npm.cmd test
 
+      - name: Verify disposable first-use workflow
+        run: npm.cmd run verify:usable
+
+      - name: Verify disposable Agent host setup
+        run: npm.cmd run verify:community
+
       - name: Audit public release content
         run: npm.cmd run audit:public-release

@@ -78,7 +78,7 @@ test("package, server and visible build share the same release version", async (
   ]);
   const packageData = JSON.parse(packageText);
 
-  assert.equal(packageData.version, "1.3.3");
-  assert.match(versionModule, /APP_VERSION = "1\.3\.3"/);
-  assert.match(html, /BUILD 1\.3\.3/);
+  assert.equal(packageData.version, "1.4.0-beta.1");
+  assert.match(versionModule, /APP_VERSION = "1\.4\.0-beta\.1"/);
+  assert.match(html, /BUILD 1\.4\.0-beta\.1/);
 });

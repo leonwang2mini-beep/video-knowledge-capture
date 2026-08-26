@@ -34,11 +34,12 @@ async function withMockServer(handler, run) {
   }
 }
 
-test("agent skill installer exact-syncs Codex, Claude, and custom skill directories", async () => {
+test("agent skill installer exact-syncs Codex, Claude, OpenClaw, and custom skill directories", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "p0004-agent-skill-install-"));
   try {
     const codex = await installAgentSkill({ target: "codex", homeDir: root, env: {} });
     const claude = await installAgentSkill({ target: "claude", homeDir: root, env: {} });
+    const openclaw = await installAgentSkill({ target: "openclaw", homeDir: root, env: {} });
     const customSkillsDir = path.join(root, "custom-skills");
     const firstCustom = await installAgentSkill({ target: "custom", skillsDir: customSkillsDir });
     const staleFile = path.join(firstCustom.skillDir, "references", "stale.md");
@@ -48,14 +49,17 @@ test("agent skill installer exact-syncs Codex, Claude, and custom skill director
 
     assert.equal(codex.copiedCount, 4);
     assert.equal(claude.copiedCount, 4);
+    assert.equal(openclaw.copiedCount, 4);
     assert.equal(firstCustom.copiedCount, 4);
     assert.equal(secondCustom.copiedCount, 4);
     assert.equal(secondCustom.prunedCount, 1);
     assert.match(codex.skillDir, /\.codex[\\/]skills[\\/]video-knowledge-capture$/);
     assert.match(claude.skillDir, /\.claude[\\/]skills[\\/]video-knowledge-capture$/);
+    assert.match(openclaw.skillDir, /\.openclaw[\\/]skills[\\/]video-knowledge-capture$/);
     await assert.rejects(readFile(staleFile, "utf8"), { code: "ENOENT" });
     assert.match(await readFile(path.join(codex.skillDir, "SKILL.md"), "utf8"), /name: video-knowledge-capture/);
     assert.match(await readFile(path.join(claude.skillDir, "scripts", "p0004-client.mjs"), "utf8"), /127\.0\.0\.1:43127/);
+    assert.match(await readFile(path.join(openclaw.skillDir, "SKILL.md"), "utf8"), /name: video-knowledge-capture/);
   } finally {
     await rm(root, { force: true, recursive: true });
   }

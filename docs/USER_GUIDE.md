@@ -2,6 +2,25 @@
 
 ## 第一次使用
 
+### 推荐：按宿主一条命令安装
+
+在仓库根目录打开 PowerShell，把示例 Inbox 换成一个已存在、可写的 Obsidian 文件夹：
+
+```powershell
+npm.cmd run setup:community -- --host codex --inbox "D:\我的知识库\00 Inbox"
+```
+
+`--host` 可使用 `codex`、`claude`、`hermes` 或 `openclaw`。只有明确需要在同一台电脑安装全部四种宿主时才使用 `all`。该命令会保存 Inbox、安装核心下载和转写运行时，并精确同步指定宿主的 Skill；重复运行不会创建重复 Skill。
+
+安装后启动服务并执行只读诊断：
+
+```powershell
+start-video-capture.cmd
+npm.cmd run doctor -- --host codex
+```
+
+只有 doctor 返回 `status: "ready"`，才能证明这台电脑的基础条件已经就绪；它不等于某个公开视频一定可下载，也不替代手机消息链路和真实用户验收。
+
 ### 1. 准备 Inbox
 
 在 Obsidian 中新建一个专门接收视频笔记的文件夹，例如：
@@ -36,6 +55,18 @@ http://127.0.0.1:43127
 - 显示“待配置”或“需检查”：根据页面提示确认路径是否存在、是否为文件夹、是否可写。
 
 配置只记录本地文件夹路径，不包含 Obsidian 账号或任何平台凭据。
+
+## 在不同 Agent 中使用
+
+- Codex：`npm.cmd run setup:skill:codex`
+- Claude Code：`npm.cmd run setup:skill:claude`
+- Hermes：`npm.cmd run setup:hermes`，随后由用户显式启用插件和所需消息渠道
+- OpenClaw：`npm.cmd run setup:skill:openclaw`
+- 其他 Agent Skills 宿主：使用 `node scripts/install-agent-skill.mjs --target custom --skills-dir "<绝对目录>"`
+
+这些命令只安装交互层。视频下载、转写、去重和 Obsidian 写入始终由同一台 Windows 电脑上的 P0004 本地服务完成；电脑关机、服务未启动或宿主不能执行本地 Node.js 客户端时，Agent 必须返回 `unavailable`，不能声称任务已经排队。
+
+当前仓库不内置 QQ、微信等聊天软件的通用适配器。接入这些软件需要一个已完成相应渠道授权的 Agent，并且要对该宿主的 Skill 发现、工具权限、网络边界和真实手机端到端链路分别验收。
 
 ## 日常收录：只粘贴链接
 

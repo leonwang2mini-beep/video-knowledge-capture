@@ -14,6 +14,7 @@ const declaredFiles = [
   ["skills/video-knowledge-capture/SKILL.md", "skills/video-knowledge-capture/SKILL.md"],
   ["skills/video-knowledge-capture/agents/openai.yaml", "skills/video-knowledge-capture/agents/openai.yaml"],
   ["skills/video-knowledge-capture/references/host-setup.md", "skills/video-knowledge-capture/references/host-setup.md"],
+  ["skills/video-knowledge-capture/scripts/p0004-client.mjs", "skills/video-knowledge-capture/scripts/p0004-client.mjs"],
 ];
 
 function parseArguments(argv) {
