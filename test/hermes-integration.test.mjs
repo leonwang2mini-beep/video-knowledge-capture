@@ -312,7 +312,7 @@ test("Hermes integration keeps a fixed loopback handler and aligned skill metada
   assert.match(skillSource, /## Report the Result/);
   assert.match(skillSource, /PUBLIC_MEDIA_PLATFORM_UNSUPPORTED/);
   assert.match(skillSource, /do not replace the local service with another downloader/);
-  assert.match(manifestSource, /version: "1\.3\.2"/);
-  assert.equal(JSON.parse(packageSource).version, "1.3.2");
-  assert.match(projectSource, /release_candidate: "1\.3\.2"/);
+  assert.match(manifestSource, /version: "1\.3\.3"/);
+  assert.equal(JSON.parse(packageSource).version, "1.3.3");
+  assert.match(projectSource, /release_candidate: "1\.3\.3"/);
 });

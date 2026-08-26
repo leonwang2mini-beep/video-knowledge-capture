@@ -3,6 +3,7 @@ import {
   mkdir,
   open,
   readFile,
+  rename,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -210,6 +211,15 @@ function isolatedConfig() {
   ].join("\n");
 }
 
+export function resolveWechatBufferExecutablePath(configDir) {
+  return path.join(
+    resolveWorkDir(configDir),
+    "wx-channel-buffer",
+    "runtime",
+    "wx_channel.exe",
+  );
+}
+
 export async function prepareWechatBufferRuntime(configDir, {
   runId = randomUUID(),
 } = {}) {
@@ -220,15 +230,22 @@ export async function prepareWechatBufferRuntime(configDir, {
   const sourceDigest = digestBuffer(sourceBinary);
   const replacementScript = buildWechatBufferCaptureScript(safeRunId);
   const patch = patchWechatRuntimeBuffer(sourceBinary, replacementScript);
-  const runRoot = path.join(resolveWorkDir(configDir), "wx-channel-buffer", safeRunId);
-  const executablePath = path.join(runRoot, "wx_channel.exe");
+  const bridgeRoot = path.join(resolveWorkDir(configDir), "wx-channel-buffer");
+  const runtimeRoot = path.join(bridgeRoot, "runtime");
+  const runRoot = path.join(bridgeRoot, "runs", safeRunId);
+  const executablePath = resolveWechatBufferExecutablePath(configDir);
+  const temporaryExecutablePath = path.join(
+    runtimeRoot,
+    `.wx_channel-${randomUUID()}.tmp`,
+  );
   const configPath = path.join(runRoot, "config.yaml");
+  await mkdir(runtimeRoot, { recursive: true });
   await mkdir(path.dirname(runRoot), { recursive: true });
   await mkdir(runRoot, { recursive: false });
 
   let executableHandle;
   try {
-    executableHandle = await open(executablePath, "wx");
+    executableHandle = await open(temporaryExecutablePath, "wx");
     await executableHandle.writeFile(patch.binary);
     await executableHandle.sync();
     await executableHandle.close();
@@ -236,6 +253,7 @@ export async function prepareWechatBufferRuntime(configDir, {
     await writeFile(configPath, isolatedConfig(), { encoding: "utf8", flag: "wx" });
   } catch (error) {
     await executableHandle?.close().catch(() => {});
+    await rm(temporaryExecutablePath, { force: true }).catch(() => {});
     await rm(runRoot, { recursive: true, force: true }).catch(() => {});
     throw bridgeError(
       "无法创建隔离的微信缓冲捕获运行时。",
@@ -247,10 +265,24 @@ export async function prepareWechatBufferRuntime(configDir, {
 
   const sourceAfter = await readFile(sourcePath);
   if (digestBuffer(sourceAfter) !== sourceDigest) {
+    await rm(temporaryExecutablePath, { force: true }).catch(() => {});
     await rm(runRoot, { recursive: true, force: true }).catch(() => {});
     throw bridgeError(
       "微信 sidecar 原始运行时在创建兼容副本期间发生变化，已中止。",
       "WECHAT_BUFFER_SOURCE_CHANGED",
+    );
+  }
+
+  try {
+    await rename(temporaryExecutablePath, executablePath);
+  } catch (error) {
+    await rm(temporaryExecutablePath, { force: true }).catch(() => {});
+    await rm(runRoot, { recursive: true, force: true }).catch(() => {});
+    throw bridgeError(
+      "无法更新固定路径的微信缓冲捕获运行时。",
+      "WECHAT_BUFFER_RUNTIME_REPLACE_FAILED",
+      error,
+      true,
     );
   }
 
@@ -262,5 +294,6 @@ export async function prepareWechatBufferRuntime(configDir, {
     runId: safeRunId,
     runRoot,
     sourceDigest,
+    workingDirectory: runRoot,
   };
 }

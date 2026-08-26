@@ -25,6 +25,8 @@
 - 公开视频下载器禁用用户配置、播放列表、直播和浏览器 Cookie 导入；平台登录、私有、付费、地区限制或 DRM 内容明确失败，不绕过访问控制。
 - 抖音只使用任务级匿名隔离浏览器资料和一次性 Cookie 文件；任务结束后无论成功失败都清理。小红书必须保留当前完整分享链接中的时效参数。
 - 微信视频号优先使用腾讯元宝隔离登录路线；明文会话只在内存中使用，持久化记录使用 Windows DPAPI 当前用户保护。桌面微信 sidecar、证书和捕获只能显式启用。
+- Windows 防火墙按可执行文件路径识别桌面微信 sidecar。受管补丁副本固定为 `<config>/work/wx-channel-buffer/runtime/wx_channel.exe`，每次任务只隔离 `runs/<run_id>` 下的配置和数据；不得再从随机可执行文件路径启动。
+- 桌面微信 sidecar 使用两条路径限定的入站阻止规则覆盖原始运行时和受管副本，阻止所有网络配置文件的外部入站访问；不得通过关闭防火墙或放行公用网络来消除提示。
 - Hermes 插件只注册 `video_knowledge_capture` 和 `video_knowledge_status`，通过固定 loopback JSON 调用 P0004；消息渠道授权由 Hermes 单独控制。
 - 回执合同固定为 `completed`、`duplicate`、`processing`、`failed`、`unavailable`。只有前两者证明完成；本社区版本不提供电脑离线时的云端队列。
 
@@ -38,9 +40,15 @@
 - 2026-08-25：维护者确认根目录 `SECURITY.md`。策略覆盖 canonical Skill、本地服务、平台适配、运行时和 Obsidian 写入，并固定 loopback、SSRF、路径、凭据、完整性及私密披露边界。
 - 2026-08-25：维护者授权创建公共 GitHub 仓库 `https://github.com/leonwang2mini-beep/video-knowledge-capture` 并推送 `main`；仓库保持 source-available 定位，不因公开可见而变成 OSI 开源。
 
+## 宣传定位
+
+- 2026-08-25：首条公共推广视频采用“双端真实演示”。电脑端展示 Codex/Web 调用 canonical Skill，移动端重点展示用户在飞书把公开视频链接发给 Hermes，家庭电脑上的 P0004 随后下载、离线转写并写入知识库。
+- 移动端便利性是首发宣传的主要差异点，但对外必须同时说明电脑、Hermes Gateway 和 P0004 需要保持在线；正式录制前还要完成一次由真实手机发起的 E4 验收，不能用临时技术验收冒充真实手机闭环。
+- 2026-08-26：公共推广内容统一使用 GitHub 仓库名 `video-knowledge-capture`，不显示内部项目 ID。兼容性采用两层表述：Codex、Claude Code、Hermes 和自定义 Skill 目录属于已验证入口；QQ、微信等消息渠道及其他 Agent 只能表述为通过兼容 Agent Skills 或适配器调用本地接口后可接入，不能说成全部开箱即用。推广成片必须包含清晰中文旁白和可听背景音乐。
+
 ## 已验证命令
 
-- `npm.cmd test`：1.3.2 公共发行基线通过 92 项离线测试，覆盖核心、HTTP、运行时、平台适配、Agent Skill 安装、Hermes 和凭据保护。
+- `npm.cmd test`：1.3.3 通过 93 项离线测试，覆盖核心、HTTP、运行时、平台适配、Agent Skill 安装、Hermes、凭据保护和微信 sidecar 固定路径防火墙目标。
 - `npm.cmd run verify:runtime`：固定版本的 yt-dlp、FFmpeg、whisper.cpp、模型和 wx_channel 可复算安装后摘要。
 - `npm.cmd run verify:usable`：使用临时配置和 Inbox 验证本地 HTTP 创建、去重、失败和重试，不访问真实知识库。
 - `npm.cmd run verify:hermes`：使用临时 Hermes Home、临时配置和 Inbox 验证插件发现、提交、状态查询、完成、重复和失败映射。
@@ -51,10 +59,15 @@
 - `git clone --local --no-hardlinks . <temporary-directory>`：独立 `main` 检出在验证前后均保持干净，92 项测试、89 文件审计和 canonical Skill 校验通过。
 - `gh run view 32861621767 --repo leonwang2mini-beep/video-knowledge-capture`：首次公开 push 的 Windows CI 在 Node.js 20 和 24 上均通过离线测试与公开发行审计。
 - `PYTHONDONTWRITEBYTECODE=1`：所有 Python 集成验证子进程禁用字节码缓存，避免测试污染待发布工作树。
+- `npm.cmd run wechat:configure-firewall`：在管理员 PowerShell 中一次性清理 P0004 旧随机路径规则，并安装固定的本机专用入站阻止规则。
+- `npm.cmd run wechat:firewall-status`：只读确认两条固定规则均为 `Inbound`、`Block`、`Any`；`npm.cmd run wechat:uninstall-firewall` 可精确撤销。
+- `hermes gateway status --deep`：本机升级到 1.3.3 后六项 Gateway 探针通过；`GET /api/health` 同时确认 P0004 仅监听 `127.0.0.1`。
 
 ## 踩坑与限制
 
 - Windows PowerShell 执行策略可能拦截 `npm.ps1`；项目命令使用 `npm.cmd`。
+- 仅把 patched sidecar 改成稳定路径还不够；历史随机路径已产生的 Windows 防火墙规则必须限定为 P0004 受管路径后批量清理，否则会持续累积并让问题难以定位。
+- `audit:public-release` 会遍历整个工作目录而不是只审计 Git 发布树；被 `.gitignore` 排除的本地 `out/` 也可能触发误报，发行证据应在只包含 `git ls-files --cached --others --exclude-standard` 的临时镜像中复验，且不得删除用户生成物。
 - Node.js 24 在 Windows 上删除空目录时可能对 `fs.rm(path)` 返回 `ERR_FS_EISDIR`；已知空目录使用 `rmdir()`，递归删除只针对测试创建的限定临时根目录。
 - 浏览器或平台规则变化可能让先前可用的公开链接失败；错误必须保留稳定分类，不能伪造字幕、改用用户 Cookie 或旁路 P0004 写库。
 - Skill 是交互和适配层，不包含云端处理能力。本地 P0004 服务、Node.js 和所需运行时仍必须安装并运行。

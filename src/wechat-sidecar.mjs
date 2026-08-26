@@ -404,7 +404,7 @@ export class WechatSidecar {
       mkdir(this.logDir, { recursive: true }),
     ]);
     const child = this.spawnImpl(executable, [], {
-      cwd: path.dirname(executable),
+      cwd: bufferRuntime.workingDirectory ?? bufferRuntime.runRoot ?? path.dirname(executable),
       env: {
         ...process.env,
         WX_CHANNEL_DOWNLOADS_DIR: this.downloadDir,

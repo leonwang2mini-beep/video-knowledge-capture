@@ -16,6 +16,7 @@ import {
   buildWechatBufferCaptureScript,
   patchWechatRuntimeBuffer,
   prepareWechatBufferRuntime,
+  resolveWechatBufferExecutablePath,
   WechatBufferBridgeError,
 } from "../src/wechat-buffer-bridge.mjs";
 
@@ -85,7 +86,7 @@ test("patchWechatRuntimeBuffer rejects missing, ambiguous and undersized slots",
   );
 });
 
-test("prepareWechatBufferRuntime writes an isolated copy and leaves the verified source unchanged", async (t) => {
+test("prepareWechatBufferRuntime reuses one executable path while isolating each run", async (t) => {
   const original = fixtureBinary();
   const fixture = await createInstalledFixture(original);
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
@@ -93,10 +94,23 @@ test("prepareWechatBufferRuntime writes an isolated copy and leaves the verified
   const prepared = await prepareWechatBufferRuntime(fixture.root, {
     runId: "test-run-12345678",
   });
+  const preparedAgain = await prepareWechatBufferRuntime(fixture.root, {
+    runId: "test-run-87654321",
+  });
 
   assert.notEqual(prepared.executablePath, fixture.executable);
+  assert.equal(
+    prepared.executablePath,
+    resolveWechatBufferExecutablePath(fixture.root),
+  );
+  assert.equal(preparedAgain.executablePath, prepared.executablePath);
+  assert.notEqual(preparedAgain.runRoot, prepared.runRoot);
   assert.deepEqual(await readFile(fixture.executable), original);
-  assert.notDeepEqual(await readFile(prepared.executablePath), original);
+  const patchedExecutable = await readFile(preparedAgain.executablePath);
+  assert.notDeepEqual(patchedExecutable, original);
+  assert.match(patchedExecutable.toString("utf8"), /test-run-87654321/);
   assert.equal((await stat(path.join(prepared.runRoot, "config.yaml"))).isFile(), true);
+  assert.equal((await stat(path.join(preparedAgain.runRoot, "config.yaml"))).isFile(), true);
   assert.equal(prepared.captureDir.startsWith(prepared.runRoot), true);
+  assert.equal(preparedAgain.workingDirectory, preparedAgain.runRoot);
 });

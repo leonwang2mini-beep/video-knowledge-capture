@@ -239,6 +239,7 @@ test("WechatSidecar reports an early child exit instead of a generic startup tim
   const child = new EventEmitter();
   child.pid = 42;
   child.kill = () => true;
+  let spawnOptions = null;
   const sidecar = new WechatSidecar(root, {
     bufferRuntimeFactory: async () => ({
       captureDir: path.join(root, "buffer-run", "downloads", "capture"),
@@ -249,7 +250,8 @@ test("WechatSidecar reports an early child exit instead of a generic startup tim
     }),
     fetchImpl: async () => { throw new Error("offline"); },
     pollIntervalMs: 1,
-    spawnImpl: () => {
+    spawnImpl: (executable, args, options) => {
+      spawnOptions = options;
       setImmediate(() => child.emit("exit", 2, null));
       return child;
     },
@@ -264,6 +266,7 @@ test("WechatSidecar reports an early child exit instead of a generic startup tim
       && /退出码 2/.test(error.message)
     ),
   );
+  assert.equal(spawnOptions.cwd, path.join(root, "buffer-run"));
 });
 
 test("WechatSidecar adopts a valid audio buffer capture from its isolated run", async (t) => {

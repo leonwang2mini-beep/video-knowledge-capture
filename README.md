@@ -105,6 +105,7 @@ node scripts/install-agent-skill.mjs --target custom --skills-dir "D:\AgentSkill
 - 公开页面逐跳阻断本机、私网、链路本地和保留地址；
 - 下载器固定版本、校验哈希、禁用用户配置、播放列表、直播和浏览器 Cookie 导入；
 - 下载 URL、解密键、Cookie 和临时令牌不会写入 Markdown 或公开任务结果；
+- 微信桌面捕获备用路线使用稳定的受管可执行文件路径，并可通过一次性防火墙配置阻止外部入站访问，避免每次任务重复出现 Windows 网络访问提示；
 - 自动测试只使用系统临时目录，不访问真实知识库。
 
 详细操作见 [使用指南](docs/USER_GUIDE.md)，架构和验收边界见 [项目简报](docs/BRIEF.md)。

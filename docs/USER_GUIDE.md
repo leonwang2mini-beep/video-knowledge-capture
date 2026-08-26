@@ -116,6 +116,23 @@ hermes gateway status --deep
 
 选择“桌面微信实时捕获（备用）”后，才需要安装 / 修复 HTTPS 证书、启动捕获组件，并在组件启动后重新打开和播放目标视频。该路线仍遵守临时目录、失败留痕和安全清理边界。
 
+首次启用或升级到 V1.3.3 后，在项目目录的管理员 PowerShell 中执行一次：
+
+```powershell
+npm.cmd run wechat:configure-firewall
+```
+
+这条命令把捕获组件固定到一个稳定的受管路径，清理 P0004 旧随机路径留下的规则，并为原始组件和受管副本各创建一条“阻止入站、所有网络配置文件生效”的规则。本机 `127.0.0.1` 通信仍可使用，局域网和公网设备不能连接组件，也不需要在 Windows 安全提示中点击“允许”。
+
+检查和撤销命令：
+
+```powershell
+npm.cmd run wechat:firewall-status
+npm.cmd run wechat:uninstall-firewall
+```
+
+若配置后仍出现同类提示，请点击“取消”而不是“允许”，再运行状态命令确认两条规则均为 `Inbound`、`Block`、`Any`；这通常说明实际启动的组件路径已发生变化，需要重新执行一次配置命令。
+
 “组件已运行”不等于视频已就绪。如果任务提示 `No ready WeChat page is available for feed profile`，先关闭视频页再打开并点击“安全重试”。当前微信可能复用组件启动前的旧 SPA 页面；如果仍未连接，需要从系统托盘彻底退出并重启桌面微信，再重新打开目标视频。无需重复安装证书。
 
 命令行 E4 验收必须在正常 Windows 桌面用户会话中运行；Codex 等受限沙箱账号可能只能读取 `%LOCALAPPDATA%` 下的 sidecar 文件，无法更新其 `config.yaml`。推荐命令：
@@ -162,6 +179,7 @@ sidecar 首次就绪可能需要约 10 秒，V1.0 等待上限为 30 秒。若�
 - 媒体只在本机处理，不重新托管；失败任务保留在隔离工作目录，供安全重试或清理。
 - 微信媒体下载 URL、解密 key 和临时令牌不会写入 Markdown 或公开任务响应。
 - 微信高级模式的根证书可从界面或 `npm.cmd run wechat:uninstall-cert` 精确卸载。
+- 微信桌面捕获组件使用稳定的受管可执行文件路径；一次性防火墙配置阻止其所有外部入站访问，可用 `npm.cmd run wechat:uninstall-firewall` 精确撤销。
 - 本机、私网、链路本地和非标准端口会被拒绝；TUN 假 IP 只对已允许的视频平台域名例外，未知域名仍拒绝。
 - 真实 Inbox 由用户自己选择；自动验收只使用系统临时目录。
 - 元宝明文 Cookie 不落盘；本地只保存 Windows DPAPI 当前用户加密记录。媒体保留记录只包含本地路径、SHA-256 和文件大小。

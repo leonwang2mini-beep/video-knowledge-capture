@@ -1,6 +1,6 @@
 {
   "name": "video-knowledge-capture",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "private": true,
   "type": "module",
   "description": "Skill-first local video capture, offline transcription, and Obsidian Inbox workflow.",
@@ -29,6 +29,9 @@
     "setup:hermes": "node scripts/install-hermes-integration.mjs",
     "wechat:install-cert": "node scripts/wechat-certificate.mjs install",
     "wechat:uninstall-cert": "node scripts/wechat-certificate.mjs uninstall",
+    "wechat:configure-firewall": "node scripts/wechat-firewall.mjs install",
+    "wechat:firewall-status": "node scripts/wechat-firewall.mjs status",
+    "wechat:uninstall-firewall": "node scripts/wechat-firewall.mjs uninstall",
     "test": "node --test",
     "verify:runtime": "node scripts/verify-runtime.mjs",
     "verify:one-box": "node scripts/verify-one-box.mjs",
