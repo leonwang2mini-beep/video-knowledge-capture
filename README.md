@@ -54,6 +54,14 @@ npm.cmd run doctor -- --host codex
 
 只下载一个 `SKILL.md` 不足以完成视频处理；本仓库的 Windows 本地引擎必须同时安装、配置并保持运行。
 
+准备向 GitHub 提交安装反馈时，使用脱敏模式并在发布前人工检查 JSON：
+
+```powershell
+npm.cmd run doctor:shareable -- --host codex
+```
+
+首次外部测试请使用临时 Inbox，并按照 [External Beta 验收指南](docs/BETA_TESTING.md) 完成真实采集、Markdown 回读和重复提交检查。
+
 ### 安装到 Codex
 
 ```powershell
@@ -146,6 +154,7 @@ npm.cmd run verify:community
 
 ## 社区与商业化
 
+- 首次安装或真实宿主体验可通过 [External Beta feedback](https://github.com/leonwang2mini-beep/video-knowledge-capture/issues/new?template=beta_feedback.yml) 提交；
 - 参与贡献前阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [CLA.md](CLA.md)；
 - 第三方运行时及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；
 - 项目名称与品牌使用边界见 [TRADEMARKS.md](TRADEMARKS.md)；

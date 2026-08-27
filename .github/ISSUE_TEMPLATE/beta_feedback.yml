@@ -1,0 +1,90 @@
+name: External Beta feedback
+description: Record a first-install and real-host acceptance result without private material.
+title: "[Beta] "
+body:
+  - type: markdown
+    attributes:
+      value: "Thank you for testing. Do not include the tested URL, cookies, tokens, account data, personal paths, media, transcript content, or raw downloader output. Follow docs/BETA_TESTING.md and review doctor:shareable before posting."
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "1.4.0-beta.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: host
+    attributes:
+      label: Host
+      options:
+        - Codex
+        - Claude Code
+        - Hermes desktop plugin
+        - Hermes real phone message
+        - OpenClaw
+        - Other Agent Skills host
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Test environment
+      options:
+        - Clean Windows computer
+        - Clean Windows user profile
+        - Existing Windows environment
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation result
+      options:
+        - Independent install completed and doctor was ready
+        - Install completed but doctor needed setup
+        - Setup failed before doctor
+    validations:
+      required: true
+  - type: input
+    id: elapsed
+    attributes:
+      label: Hands-on time
+      description: Exclude runtime download time if possible.
+      placeholder: "12 minutes"
+    validations:
+      required: true
+  - type: dropdown
+    id: capture
+    attributes:
+      label: Core task result
+      options:
+        - Completed, Markdown reviewed, and duplicate confirmed
+        - Completed but Markdown or duplicate was not confirmed
+        - Agent did not discover the Skill
+        - Capture was accepted but did not complete
+        - Capture failed with an actionable error
+        - Core task was not attempted
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: Where did you hesitate or get blocked?
+      description: Describe visible steps and messages without including the tested URL or private content.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Reviewed shareable doctor report
+      description: Paste output from `node scripts/doctor.mjs --shareable --host <host>` only after reviewing it.
+      render: json
+  - type: checkboxes
+    id: evidence
+    attributes:
+      label: Evidence boundary
+      options:
+        - label: I personally performed the actions reported above; I am not reporting an automated simulation as user acceptance.
+          required: true
+        - label: I removed credentials, URLs, personal paths, private media, transcript content, and live share identifiers.
+          required: true

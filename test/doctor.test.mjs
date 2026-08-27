@@ -4,7 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { parseArguments, runDoctor } from "../scripts/doctor.mjs";
+import {
+  createShareableDoctorResult,
+  parseArguments,
+  runDoctor,
+} from "../scripts/doctor.mjs";
 import { installAgentSkill } from "../scripts/install-agent-skill.mjs";
 import { APP_VERSION } from "../src/version.mjs";
 
@@ -111,4 +115,60 @@ test("doctor rejects a stale service version instead of reporting ready", async 
 test("doctor requires an explicit supported host", () => {
   assert.throws(() => parseArguments([]), /--host/);
   assert.throws(() => parseArguments(["--host", "unknown"]), /--host must be/);
+  assert.equal(parseArguments(["--shareable", "--host", "codex"]).shareable, true);
+});
+
+test("shareable doctor report redacts local paths and keeps actionable status", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "p0004-doctor-shareable-"));
+  const inboxDir = path.join(root, "Personal Vault", "Inbox");
+  const configDir = path.join(root, "Private Config");
+  const hermesHome = path.join(root, "Hermes Home");
+  await mkdir(inboxDir, { recursive: true });
+  try {
+    await installAgentSkill({ target: "codex", homeDir: root, env: {} });
+    const result = await runDoctor({
+      host: "codex",
+      configDir,
+      hermesHome,
+      homeDir: root,
+      env: {},
+      platform: "win32",
+      nodeVersion: "20.11.0",
+      shareable: true,
+      configLoader: async () => ({ inboxDir }),
+      runtimeStatusLoader: async () => runtimeStatus(true),
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          app: "video-knowledge-capture",
+          binding: "127.0.0.1",
+          status: "ok",
+          version: APP_VERSION,
+        }),
+      }),
+    });
+    const serialized = JSON.stringify(result);
+    assert.equal(result.status, "ready");
+    assert.equal(result.diagnostic_mode, "shareable");
+    assert.equal(result.privacy.paths_redacted, true);
+    assert.equal(result.privacy.review_before_sharing, true);
+    assert.ok(serialized.includes("<redacted-path>"));
+    assert.ok(!serialized.toLowerCase().includes(root.toLowerCase()));
+    assert.ok(!serialized.toLowerCase().includes(inboxDir.toLowerCase()));
+    assert.ok(!serialized.toLowerCase().includes(configDir.toLowerCase()));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("shareable report helper redacts slash variants", () => {
+  const result = createShareableDoctorResult({
+    config_dir: "C:\\Users\\Example\\Private Config",
+    checks: [{ summary: "C:/Users/Example/Private Config/config.json" }],
+  }, ["C:\\Users\\Example\\Private Config"]);
+  const serialized = JSON.stringify(result);
+  assert.ok(!serialized.includes("C:\\\\Users"));
+  assert.ok(!serialized.includes("C:/Users"));
+  assert.equal(result.config_dir, "<redacted-path>");
 });

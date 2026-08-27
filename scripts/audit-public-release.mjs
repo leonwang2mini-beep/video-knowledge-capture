@@ -8,11 +8,14 @@ const requiredFiles = [
   "CLA.md",
   "COMMERCIAL_LICENSE.md",
   "CONTRIBUTING.md",
+  "docs/BETA_TESTING.md",
   "LICENSE",
   "README.md",
   "SECURITY.md",
   "THIRD_PARTY_NOTICES.md",
   "TRADEMARKS.md",
+  ".github/ISSUE_TEMPLATE/beta_feedback.yml",
+  ".github/ISSUE_TEMPLATE/bug_report.yml",
   "skills/video-knowledge-capture/SKILL.md",
   "skills/video-knowledge-capture/agents/openai.yaml",
   "skills/video-knowledge-capture/references/host-setup.md",
@@ -104,6 +107,9 @@ async function audit() {
   if (packageJson.license !== "SEE LICENSE IN LICENSE") {
     findings.push({ file: "package.json", label: "package license field is not aligned with LICENSE" });
   }
+  if (packageJson.scripts?.["doctor:shareable"] !== "node scripts/doctor.mjs --shareable") {
+    findings.push({ file: "package.json", label: "shareable doctor command is missing or changed" });
+  }
   const license = await readFile(path.join(projectRoot, "LICENSE"), "utf8");
   if (!license.startsWith("# PolyForm Noncommercial License 1.0.0")) {
     findings.push({ file: "LICENSE", label: "standard PolyForm Noncommercial heading is missing" });
@@ -114,6 +120,10 @@ async function audit() {
   const readme = await readFile(path.join(projectRoot, "README.md"), "utf8");
   if (!/Source-Available/.test(readme) || !/不是 OSI 定义的开源软件/.test(readme)) {
     findings.push({ file: "README.md", label: "source-available positioning is incomplete" });
+  }
+  const betaGuide = await readFile(path.join(projectRoot, "docs", "BETA_TESTING.md"), "utf8");
+  if (!/doctor:shareable/.test(betaGuide) || !/不计 E4/.test(betaGuide) || !/临时 Inbox/.test(betaGuide)) {
+    findings.push({ file: "docs/BETA_TESTING.md", label: "external Beta evidence or privacy boundary is incomplete" });
   }
 
   if (findings.length > 0) {

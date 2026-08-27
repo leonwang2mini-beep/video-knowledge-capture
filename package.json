@@ -31,6 +31,7 @@
     "setup:hermes": "node scripts/install-hermes-integration.mjs",
     "setup:community": "node scripts/setup-community.mjs",
     "doctor": "node scripts/doctor.mjs",
+    "doctor:shareable": "node scripts/doctor.mjs --shareable",
     "wechat:install-cert": "node scripts/wechat-certificate.mjs install",
     "wechat:uninstall-cert": "node scripts/wechat-certificate.mjs uninstall",
     "wechat:configure-firewall": "node scripts/wechat-firewall.mjs install",

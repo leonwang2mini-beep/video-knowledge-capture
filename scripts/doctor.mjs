@@ -26,9 +26,14 @@ export function parseArguments(argv) {
     configDir: resolveDefaultConfigDir(),
     host: null,
     hermesHome: process.env.HERMES_HOME || path.join(os.homedir(), ".hermes"),
+    shareable: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
+    if (argument === "--shareable") {
+      options.shareable = true;
+      continue;
+    }
     const value = argv[index + 1];
     if (argument === "--host" && value) options.host = value.toLowerCase();
     else if (argument === "--config-dir" && value) options.configDir = value;
@@ -58,6 +63,54 @@ function addCheck(checks, id, passed, summary, nextAction = null) {
   });
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function sensitivePathVariants(sensitivePaths) {
+  return [...new Set(sensitivePaths
+    .filter((value) => typeof value === "string" && value.trim() !== "")
+    .flatMap((value) => {
+      const resolved = path.resolve(value);
+      return [resolved, resolved.replaceAll("\\", "/"), resolved.replaceAll("/", "\\")];
+    }))]
+    .sort((left, right) => right.length - left.length);
+}
+
+function redactDoctorValue(value, pathVariants) {
+  if (typeof value === "string") {
+    return pathVariants.reduce(
+      (redacted, candidate) => redacted.replace(
+        new RegExp(escapeRegExp(candidate), "gi"),
+        "<redacted-path>",
+      ),
+      value,
+    );
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => redactDoctorValue(entry, pathVariants));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, redactDoctorValue(entry, pathVariants)]),
+    );
+  }
+  return value;
+}
+
+export function createShareableDoctorResult(result, sensitivePaths = []) {
+  const redacted = redactDoctorValue(result, sensitivePathVariants(sensitivePaths));
+  return {
+    ...redacted,
+    diagnostic_mode: "shareable",
+    privacy: {
+      paths_redacted: true,
+      review_before_sharing: true,
+      warning: "Review this report before posting it. Never add URLs, cookies, tokens, private media, or raw downloader output.",
+    },
+  };
+}
+
 export async function runDoctor({
   configDir = resolveDefaultConfigDir(),
   host,
@@ -70,9 +123,11 @@ export async function runDoctor({
   configLoader = loadAppConfig,
   runtimeStatusLoader = getRuntimeStatus,
   baseUrl = "http://127.0.0.1:43127",
+  shareable = false,
 } = {}) {
   const hosts = expandHosts(host);
   const checks = [];
+  const sensitivePaths = [configDir, hermesHome, homeDir];
   addCheck(
     checks,
     "platform",
@@ -92,6 +147,7 @@ export async function runDoctor({
   let config = null;
   try {
     config = await configLoader(path.resolve(configDir));
+    if (config.inboxDir) sensitivePaths.push(config.inboxDir);
     if (config.inboxDir) await access(config.inboxDir, constants.W_OK);
     addCheck(
       checks,
@@ -192,7 +248,7 @@ export async function runDoctor({
     );
   }
 
-  return {
+  const result = {
     app: "video-knowledge-capture",
     version: APP_VERSION,
     status: checks.every((entry) => entry.status === "pass") ? "ready" : "needs_setup",
@@ -200,6 +256,7 @@ export async function runDoctor({
     config_dir: path.resolve(configDir),
     checks,
   };
+  return shareable ? createShareableDoctorResult(result, sensitivePaths) : result;
 }
 
 export async function main(argv = process.argv.slice(2)) {
