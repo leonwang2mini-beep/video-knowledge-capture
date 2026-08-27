@@ -15,7 +15,12 @@ async function withTempDirectory(run) {
   try {
     return await run(root);
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await rm(root, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 50,
+    });
   }
 }
 

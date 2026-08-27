@@ -77,7 +77,7 @@
 - Windows PowerShell 执行策略可能拦截 `npm.ps1`；项目命令使用 `npm.cmd`。
 - 仅把 patched sidecar 改成稳定路径还不够；历史随机路径已产生的 Windows 防火墙规则必须限定为 P0004 受管路径后批量清理，否则会持续累积并让问题难以定位。
 - `audit:public-release` 会遍历整个工作目录而不是只审计 Git 发布树；被 `.gitignore` 排除的本地 `out/` 也可能触发误报，发行证据应在只包含 `git ls-files --cached --others --exclude-standard` 的临时镜像中复验，且不得删除用户生成物。
-- Node.js 24 在 Windows 上删除空目录时可能对 `fs.rm(path)` 返回 `ERR_FS_EISDIR`；已知空目录使用 `rmdir()`，递归删除只针对测试创建的限定临时根目录。
+- Node.js 20/24 在 Windows 上清理临时目录有两类边界：空目录用 `fs.rm(path)` 可能返回 `ERR_FS_EISDIR`，应使用 `rmdir()`；有后台任务收尾的递归 `rm` 可能暂时返回 `ENOTEMPTY`，测试清理应限定在本次临时根目录，并设置 `maxRetries` 与 `retryDelay`。
 - 浏览器或平台规则变化可能让先前可用的公开链接失败；错误必须保留稳定分类，不能伪造字幕、改用用户 Cookie 或旁路 P0004 写库。
 - Skill 是交互和适配层，不包含云端处理能力。本地 P0004 服务、Node.js 和所需运行时仍必须安装并运行。
 - 项目当前只支持 Windows 本地运行；Codex 和 Claude Code 的 Skill 目录安装不等于跨平台运行时支持。
