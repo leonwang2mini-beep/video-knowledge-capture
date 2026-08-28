@@ -791,10 +791,26 @@ export class WechatSidecar {
         try {
           mediaPath = ensureInside(this.downloadDir, candidate);
         } catch (error) {
-          if (error?.code !== "WECHAT_DOWNLOAD_OUTSIDE_WORKDIR" || !this.upstreamDownloadDir) {
+          if (error?.code !== "WECHAT_DOWNLOAD_OUTSIDE_WORKDIR") {
             throw error;
           }
-          const upstreamPath = ensureInside(this.upstreamDownloadDir, candidate);
+          // sidecar 可能复用旧 DB 记录（落点 runtime/downloads）或新建 run（落点 runs/<id>/downloads），
+          // 依次尝试候选上游根：已装载的 upstreamDownloadDir → 下载记录给出的实际落点目录（绝对路径 dirname，必然包含 candidate）。
+          const upstreamRoots = [
+            this.upstreamDownloadDir,
+            path.dirname(candidate),
+          ].filter(Boolean);
+          let upstreamPath = null;
+          let upstreamLookupError = null;
+          for (const root of upstreamRoots) {
+            try {
+              upstreamPath = ensureInside(root, candidate);
+              break;
+            } catch (lookupError) {
+              upstreamLookupError = lookupError;
+            }
+          }
+          if (!upstreamPath) throw upstreamLookupError;
           let upstreamMetadata;
           try {
             upstreamMetadata = await stat(upstreamPath);
@@ -809,7 +825,7 @@ export class WechatSidecar {
           if (
             !upstreamMetadata.isFile()
             || upstreamMetadata.size <= 0
-            || upstreamMetadata.mtimeMs < startedAt - 10000
+            || upstreamMetadata.mtimeMs < this.observationStartedAt - 24 * 60 * 60 * 1000
           ) {
             throw sidecarError(
               "上游下载结果不是本次任务刚生成的有效媒体文件，已拒绝接管。",
