@@ -413,6 +413,36 @@ export class YuanbaoSessionService {
     return cookie;
   }
 
+  /**
+   * 启动时恢复已保存的登录态：本地有有效 cookie 就直接置 ready，
+   * 避免服务重启后误报"需要重新登录"（2026-09-02 修复）。
+   */
+  async restore() {
+    if (this.activePromise) return this.status();
+    try {
+      await this.loadCookie();
+      this.state = "ready";
+      this.error = null;
+      this.startedAt = this.startedAt ?? new Date().toISOString();
+      this.updatedAt = new Date().toISOString();
+    } catch (error) {
+      if (error?.code === "YUANBAO_LOGIN_REQUIRED") {
+        // 从未登录过：保持 idle，等待 startLogin
+        this.state = "idle";
+        this.error = null;
+      } else {
+        this.state = "failed";
+        this.error = {
+          code: error?.code ?? "YUANBAO_SESSION_RESTORE_FAILED",
+          message: String(error?.message ?? "腾讯元宝登录态恢复失败。").slice(0, 500),
+          retryable: true,
+        };
+        this.updatedAt = new Date().toISOString();
+      }
+    }
+    return this.status();
+  }
+
   async forget() {
     if (this.activePromise) {
       throw sessionError(

@@ -329,6 +329,60 @@ test("Hermes client reports an exact P0004 download failure instead of unsupport
   });
 });
 
+test("Hermes client gives targeted next actions for recurring usage failures", async () => {
+  const cases = [
+    {
+      code: "YUANBAO_PARSE_UNAVAILABLE",
+      message: "腾讯元宝没有解析出可播放链接；请重新登录或稍后重试。",
+      retryable: true,
+      expected: /确认电脑端仍处于登录状态/,
+    },
+    {
+      code: "WECHAT_JOB_ALREADY_ACTIVE",
+      message: "一次只能处理一个微信视频号任务。",
+      retryable: false,
+      expected: /先查询原任务编号/,
+    },
+    {
+      code: "PUBLIC_MEDIA_DOWNLOAD_FAILED",
+      message: "公开视频链接不支持直接下载。",
+      retryable: false,
+      details: { failureCategory: "unsupported-url" },
+      expected: /单视频公开链接/,
+    },
+  ];
+  let currentCase = cases[0];
+  await withMockServer(async (request, response) => {
+    if (request.method === "GET" && request.url === `/api/media/jobs/${fixedJobId}`) {
+      sendJson(response, 200, {
+        job: {
+          error: {
+            code: currentCase.code,
+            details: currentCase.details,
+            message: currentCase.message,
+            retryable: currentCase.retryable,
+            stage: "download",
+          },
+          jobId: fixedJobId,
+          retryable: currentCase.retryable,
+          sourceType: "public-url",
+          stage: "download",
+          status: "failed",
+        },
+      });
+      return;
+    }
+    sendJson(response, 404, { error: { code: "NOT_FOUND", message: "missing" } });
+  }, async (baseUrl) => {
+    for (const entry of cases) {
+      currentCase = entry;
+      const result = await invokeClient(baseUrl, "status", { job_id: fixedJobId });
+      assert.equal(result.code, entry.code);
+      assert.match(result.next_action, entry.expected);
+    }
+  });
+});
+
 test("Hermes integration keeps a fixed loopback handler and aligned skill metadata", async () => {
   const [clientSource, skillSource, manifestSource, packageSource, projectSource] = await Promise.all([
     readFile(sourceClient, "utf8"),

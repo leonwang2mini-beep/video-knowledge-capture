@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, constants, stat } from "node:fs/promises";
+import { access, constants, readFile, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -51,6 +51,15 @@ async function fileExists(filePath) {
     return (await stat(filePath)).isFile();
   } catch {
     return false;
+  }
+}
+
+async function readHermesPluginVersion(filePath) {
+  try {
+    const source = await readFile(filePath, "utf8");
+    return source.match(/^version:\s*["']([^"']+)["']\s*$/m)?.[1] || null;
+  } catch {
+    return null;
   }
 }
 
@@ -190,11 +199,18 @@ export async function runDoctor({
 
   for (const currentHost of hosts) {
     let requiredFiles;
+    let hermesPluginPath = null;
     if (currentHost === "hermes") {
       const resolvedHermesHome = path.resolve(hermesHome);
+      hermesPluginPath = path.join(
+        resolvedHermesHome,
+        "plugins",
+        "video-knowledge-capture",
+        "plugin.yaml",
+      );
       requiredFiles = [
         path.join(resolvedHermesHome, "skills", "video-knowledge-capture", "SKILL.md"),
-        path.join(resolvedHermesHome, "plugins", "video-knowledge-capture", "plugin.yaml"),
+        hermesPluginPath,
       ];
     } else {
       const skillsDir = defaultSkillsDir(currentHost, env, homeDir);
@@ -210,6 +226,21 @@ export async function runDoctor({
         ? "Run npm.cmd run setup:hermes."
         : `Run npm.cmd run setup:skill:${currentHost}.`,
     );
+    if (currentHost === "hermes") {
+      const installedVersion = present ? await readHermesPluginVersion(hermesPluginPath) : null;
+      const aligned = installedVersion === APP_VERSION;
+      addCheck(
+        checks,
+        "host-hermes-version",
+        aligned,
+        aligned
+          ? `Hermes integration version ${installedVersion} matches repository version ${APP_VERSION}.`
+          : installedVersion
+            ? `Hermes integration version ${installedVersion} does not match repository version ${APP_VERSION}.`
+            : "Hermes integration version could not be read.",
+        "Run npm.cmd run setup:hermes.",
+      );
+    }
   }
 
   try {

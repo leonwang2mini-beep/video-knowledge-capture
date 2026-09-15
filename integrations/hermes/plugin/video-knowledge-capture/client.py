@@ -76,6 +76,12 @@ def _next_action(code: str, *, retryable: bool = True) -> str:
         "WECHAT_SETUP_REQUIRED": "在家庭电脑打开视频知识捕手设置，启用微信高级模式并完成本地授权。",
         "WECHAT_ADVANCED_MODE_DISABLED": "在家庭电脑打开视频知识捕手设置，启用微信高级模式。",
         "YUANBAO_LOGIN_REQUIRED": "在家庭电脑的视频知识捕手中重新完成腾讯元宝隔离登录。",
+        "YUANBAO_PARSE_UNAVAILABLE": "腾讯元宝暂未解析出可播放链接；确认电脑端仍处于登录状态，稍后重新发送原链接。",
+        "YUANBAO_MEDIA_URL_INVALID": "该视频暂未返回可用媒体地址；不要连续快速重试，稍后重新发送原链接。",
+        "YUANBAO_NETWORK_FAILED": "确认电脑网络和腾讯元宝可访问后，稍后重新发送原链接。",
+        "WECHAT_DOWNLOAD_FILE_MISSING": "上游记录已完成但媒体文件不在本机；保留当前任务编号，稍后安全重试原链接。",
+        "WECHAT_DOWNLOAD_OUTSIDE_WORKDIR": "本机已拒绝不受管理的下载文件；先重启视频知识捕手，再重试原链接。",
+        "WECHAT_JOB_ALREADY_ACTIVE": "已有一个微信视频号任务在处理；先查询原任务编号，完成后再发送新链接。",
         "P0004_UNAVAILABLE": "确认家庭电脑已开机，并启动 start-video-capture.cmd 后重新发送链接。",
         "INVALID_VIDEO_URL": "重新发送一条完整的 http 或 https 公公开视频链接。",
         "URL_CREDENTIALS_REJECTED": "删除链接中的用户名或密码后重新发送公开链接。",
@@ -361,6 +367,8 @@ class P0004Client:
                     result["next_action"] = "稍后重新发送原链接；P0004 会再次使用较小的兼容媒体格式。"
                 elif failure_category == "login-required":
                     result["next_action"] = "该链接要求登录或人机验证；请改发无需登录即可播放的公开链接。"
+                elif failure_category == "unsupported-url":
+                    result["next_action"] = "请发送平台的单视频公开链接，不要发送搜索页、课程页、合集或短链落地页。"
                 elif failure_category in {"access-restricted", "content-unavailable"}:
                     result["next_action"] = "检查视频是否仍公开可播放；P0004 不会读取 Cookie 或绕过访问限制。"
             return result

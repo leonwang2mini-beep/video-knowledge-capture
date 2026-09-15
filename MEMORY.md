@@ -29,6 +29,9 @@
 - Windows 防火墙按可执行文件路径识别桌面微信 sidecar。受管补丁副本固定为 `<config>/work/wx-channel-buffer/runtime/wx_channel.exe`，每次任务只隔离 `runs/<run_id>` 下的配置和数据；不得再从随机可执行文件路径启动。
 - 桌面微信 sidecar 使用两条路径限定的入站阻止规则覆盖原始运行时和受管副本，阻止所有网络配置文件的外部入站访问；不得通过关闭防火墙或放行公用网络来消除提示。
 - Hermes 插件只注册 `video_knowledge_capture` 和 `video_knowledge_status`，通过固定 loopback JSON 调用 P0004；消息渠道授权由 Hermes 单独控制。
+- 2026-09-15：长期使用暴露出“集成文件存在但版本已漂移”的风险；Hermes 受管插件必须与 `package.json` 的 `APP_VERSION` 对齐。`doctor --host hermes` 现在同时检查 `plugin.yaml` 版本，项目版本变化后先运行 `npm.cmd run setup:hermes`，再重启 Hermes Gateway。
+- 2026-09-15：Hermes 客户端对元宝解析不可用、无效媒体地址、网络失败、微信下载文件缺失、已有活动任务和公开链接类型不支持提供稳定的下一步提示；`WECHAT_JOB_ALREADY_ACTIVE` 只提示查询原任务，不自动并发或盲目重试。
+- 2026-09-15：Hermes 新版工具注册按 profile 隔离，验证器读取 `PluginManager` 的受管工具注册清单，不再依赖旧的全局 `tools.registry._tools`。
 - 回执合同固定为 `completed`、`duplicate`、`processing`、`failed`、`unavailable`。只有前两者证明完成；本社区版本不提供电脑离线时的云端队列。
 
 ## Skill-first 公共发行决策
@@ -56,13 +59,14 @@
 
 ## 已验证命令
 
-- `npm.cmd test`：1.4.0-beta.1 通过 101 项离线测试，覆盖核心、HTTP、运行时、平台适配、四宿主 Agent Skill 安装、Hermes、doctor、配置根目录、路径 junction、凭据保护和微信 sidecar 防火墙目标。
+- `npm.cmd test`：1.4.0-beta.1 通过 105 项离线测试，覆盖核心、HTTP、运行时、平台适配、四宿主 Agent Skill 安装、Hermes、doctor、配置根目录、路径 junction、凭据保护和微信 sidecar 防火墙目标。
 - `npm.cmd run verify:runtime`：固定版本的 yt-dlp、FFmpeg、whisper.cpp、模型和 wx_channel 可复算安装后摘要。
 - `npm.cmd run verify:usable`：使用临时配置和 Inbox 验证本地 HTTP 创建、去重、失败和重试，不访问真实知识库。
 - `npm.cmd run verify:hermes`：使用临时 Hermes Home、临时配置和 Inbox 验证插件发现、提交、状态查询、完成、重复和失败映射。
 - `python quick_validate.py skills/video-knowledge-capture`：canonical Skill 的名称、frontmatter 和结构验证通过；Windows 运行时设置 `PYTHONUTF8=1`。
 - `node --test test/agent-skill.test.mjs test/hermes-integration.test.mjs`：Codex、Claude Code、自定义 Skill 目录、bundled client 与 Hermes exact-sync 均有隔离测试。
 - `npm.cmd run verify:community`：使用临时用户目录、配置和 Inbox 安装 Codex、Claude Code、Hermes 与 OpenClaw 集成，并在注入的健康运行时和 loopback 服务下让 doctor 达到 `ready`；该结果是 E3 模拟，不是实际宿主 E4。
+- `npm.cmd run doctor -- --host hermes --hermes-home <configured Hermes Home> --shareable`：只读检查 Windows、Node、Inbox、运行时、Hermes 文件、Hermes 版本一致性和 loopback 服务；输出脱敏路径并保留下一步动作。
 - `npm.cmd run verify:public-release`：1.4.0-beta.1 的干净本地克隆通过 101 项离线测试、临时首用、四宿主隔离首装和 98 文件公共发行审计；审计阻断个人路径、真实分享标识、PID、凭据材料、Python 缓存和重复 Skill 源。
 - `py -3 resolve_security_md.py --repo . --scope . --out -`：根目录 `SECURITY.md` 是唯一有效策略，解析链无冲突。
 - `git clone --local --no-hardlinks . <temporary-directory>`：独立 `main` 检出在验证前后均保持干净，101 项测试、98 文件审计、临时首用、四宿主隔离首装和 canonical Skill 校验通过。
@@ -78,6 +82,7 @@
 - 仅把 patched sidecar 改成稳定路径还不够；历史随机路径已产生的 Windows 防火墙规则必须限定为 P0004 受管路径后批量清理，否则会持续累积并让问题难以定位。
 - `audit:public-release` 会遍历整个工作目录而不是只审计 Git 发布树；被 `.gitignore` 排除的本地 `out/` 也可能触发误报，发行证据应在只包含 `git ls-files --cached --others --exclude-standard` 的临时镜像中复验，且不得删除用户生成物。
 - Node.js 20/24 在 Windows 上清理临时目录有两类边界：空目录用 `fs.rm(path)` 可能返回 `ERR_FS_EISDIR`，应使用 `rmdir()`；有后台任务收尾的递归 `rm` 可能暂时返回 `ENOTEMPTY`，测试清理应限定在本次临时根目录，并设置 `maxRetries` 与 `retryDelay`。
+- Hermes 1.4 的插件工具注册是 profile-scoped；直接读取旧的全局 `tools.registry._tools` 可能得到空列表，即使插件已加载并登记工具。验证应读取 `PluginManager` 的受管注册结果，并用 `hermes plugins list` 与实际工具探针交叉确认。
 - 浏览器或平台规则变化可能让先前可用的公开链接失败；错误必须保留稳定分类，不能伪造字幕、改用用户 Cookie 或旁路 P0004 写库。
 - Skill 是交互和适配层，不包含云端处理能力。本地 P0004 服务、Node.js 和所需运行时仍必须安装并运行。
 - 项目当前只支持 Windows 本地运行；Codex 和 Claude Code 的 Skill 目录安装不等于跨平台运行时支持。

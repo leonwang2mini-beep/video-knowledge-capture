@@ -236,8 +236,10 @@ try {
     "from hermes_cli.plugins import PluginManager",
     "manager = PluginManager()",
     "manager.discover_and_load()",
-    "from tools.registry import registry",
-    "names = sorted(n for n in registry._tools if n.startswith('video_knowledge_'))",
+    // Hermes 1.4 keeps plugin registrations in the profile-scoped manager;
+    // the legacy global tools.registry is intentionally empty for this path.
+    "plugin = manager._plugins.get('video-knowledge-capture')",
+    "names = sorted(plugin.tools_registered if plugin else [])",
     "print(json.dumps({'tools': names}))",
   ].join("; ");
   const discovery = await runProcess(hermesPython, ["-c", discoveryCode], {

@@ -204,6 +204,11 @@ export class MediaJobService {
       mkdir(this.jobsDir, { recursive: true }),
       mkdir(path.join(this.workRoot, "jobs"), { recursive: true }),
     ]);
+    // 启动时恢复已保存的元宝登录态，避免误报"需要重新登录"（2026-09-02 修复）。
+    // 保持对旧解析器/测试夹具的兼容：没有 restore 时继续使用无会话启动。
+    if (typeof this.yuanbaoResolver?.session?.restore === "function") {
+      await this.yuanbaoResolver.session.restore().catch(() => {});
+    }
     const entries = await readdir(this.jobsDir, { withFileTypes: true });
     for (const entry of entries) {
       if (!entry.isFile() || !entry.name.endsWith(".json")) continue;

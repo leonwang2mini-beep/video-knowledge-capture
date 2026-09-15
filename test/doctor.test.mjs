@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -10,6 +10,7 @@ import {
   runDoctor,
 } from "../scripts/doctor.mjs";
 import { installAgentSkill } from "../scripts/install-agent-skill.mjs";
+import { installHermesIntegration } from "../scripts/install-hermes-integration.mjs";
 import { APP_VERSION } from "../src/version.mjs";
 
 function runtimeStatus(ready = true) {
@@ -107,6 +108,55 @@ test("doctor rejects a stale service version instead of reporting ready", async 
     const serviceCheck = result.checks.find((entry) => entry.id === "service");
     assert.equal(serviceCheck.status, "fail");
     assert.match(serviceCheck.summary, /does not match repository version/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("doctor detects Hermes integration version drift", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "p0004-doctor-hermes-"));
+  const inboxDir = path.join(root, "Inbox");
+  const hermesHome = path.join(root, "Hermes Home");
+  await mkdir(inboxDir, { recursive: true });
+  try {
+    await installHermesIntegration({ hermesHome });
+    const pluginPath = path.join(hermesHome, "plugins", "video-knowledge-capture", "plugin.yaml");
+    const pluginSource = await readFile(pluginPath, "utf8");
+    const sharedOptions = {
+      host: "hermes",
+      configDir: path.join(root, "config"),
+      hermesHome,
+      homeDir: root,
+      env: {},
+      platform: "win32",
+      nodeVersion: "20.11.0",
+      configLoader: async () => ({ inboxDir }),
+      runtimeStatusLoader: async () => runtimeStatus(true),
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          app: "video-knowledge-capture",
+          binding: "127.0.0.1",
+          status: "ok",
+          version: APP_VERSION,
+        }),
+      }),
+    };
+    const aligned = await runDoctor(sharedOptions);
+    assert.equal(aligned.status, "ready");
+    assert.equal(aligned.checks.find((entry) => entry.id === "host-hermes-version").status, "pass");
+
+    await writeFile(pluginPath, pluginSource.replace(
+      `version: "${APP_VERSION}"`,
+      'version: "0.0.0-stale"',
+    ), "utf8");
+    const stale = await runDoctor(sharedOptions);
+    assert.equal(stale.status, "needs_setup");
+    const versionCheck = stale.checks.find((entry) => entry.id === "host-hermes-version");
+    assert.equal(versionCheck.status, "fail");
+    assert.match(versionCheck.summary, /does not match repository version/);
+    assert.equal(versionCheck.next_action, "Run npm.cmd run setup:hermes.");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

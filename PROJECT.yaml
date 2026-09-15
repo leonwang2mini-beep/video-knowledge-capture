@@ -8,7 +8,7 @@ primary_domain: "edu-education"
 source_type: "owned"
 lifecycle: "build"
 created_at: "2026-07-19"
-updated_at: "2026-08-27"
+updated_at: "2026-09-15"
 summary: "A Skill-first Windows workflow that captures user-authorized public videos, transcribes them locally, and writes structured Markdown into an explicitly configured Obsidian Inbox."
 
 current_milestone:
@@ -46,6 +46,10 @@ current_milestone:
     - id: "m11-external-user-e4"
       status: "pending-external-users"
       result: "Three external first installs, real host captures with Markdown and duplicate readback, and at least one real phone Hermes flow remain required; no automated run can close this item."
+    - id: "m11-hermes-usage-hardening"
+      status: "verified"
+      command: "npm.cmd test; npm.cmd run verify:hermes; npm.cmd run verify:community; npm.cmd run doctor -- --host hermes --hermes-home <configured Hermes Home> --shareable"
+      result: "Hermes usage evidence led to version-drift detection, targeted next actions for recurring failure codes, and a profile-scoped tool-discovery verifier. The installed integration is aligned with 1.4.0-beta.1; 105 offline tests, the temporary Hermes end-to-end flow, four-host simulated install, and shareable doctor all passed."
 
 public_repository:
   url: "https://github.com/leonwang2mini-beep/video-knowledge-capture"
